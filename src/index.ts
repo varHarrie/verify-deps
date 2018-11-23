@@ -23,7 +23,7 @@ function analyze (projectDir: string, dep: Dependency) {
 export default function verify (projectDir: string, types: DependencyType[] = []) {
   const pkg = readJson(path.join(projectDir, 'package.json'))
 
-  if (types.length === 0) types = ['dependencies']
+  if (types.length === 0) types = ['dependencies', 'devDependencies', 'peerDependencies']
 
   return types.map((type) => {
     const deps = toArray(pkg[type])

@@ -17,7 +17,6 @@ const cli = meow(`
     --development  -dev   Checks for devDependencies.
     --production   -prod  Checks for dependencies.
     --peer                Checks for peerDependencies.
-    --all          -a     Checks for all dependencies.
     --version      -v     Displays the version.
     --help         -h     Displays the help.
 
@@ -34,10 +33,6 @@ const cli = meow(`
     production: {
       type: 'boolean',
       alias: 'prod'
-    },
-    all: {
-      type: 'boolean',
-      alias: 'a'
     }
   }
 })
@@ -47,9 +42,9 @@ const cwd = process.cwd()
 
 const types: DependencyType[] = []
 
-if (flags.development || flags.all) types.push('devDependencies')
-if (flags.production || flags.all) types.push('dependencies')
-if (flags.peer || flags.all) types.push('peerDependencies')
+if (flags.development) types.push('devDependencies')
+if (flags.production) types.push('dependencies')
+if (flags.peer) types.push('peerDependencies')
 
 let projectDir = input[0] || '.'
 if (projectDir[0] === '.') projectDir = path.join(cwd, projectDir)
