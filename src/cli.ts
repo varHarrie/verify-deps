@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import Debug from 'debug'
 import meow from 'meow'
 import ora from 'ora'
 import path from 'path'
@@ -8,6 +9,7 @@ import verify from './index'
 import { DependencyType } from './types'
 
 const log = console.log
+const debug = Debug('debug:cli')
 
 const cli = meow(`
   Usage
@@ -17,6 +19,7 @@ const cli = meow(`
     --development  -dev   Checks for devDependencies.
     --production   -prod  Checks for dependencies.
     --peer                Checks for peerDependencies.
+    --debug               Displays debug logs.
     --version      -v     Displays the version.
     --help         -h     Displays the help.
 
@@ -42,6 +45,7 @@ const cwd = process.cwd()
 
 const types: DependencyType[] = []
 
+if (flags.debug) Debug.enable('debug:*')
 if (flags.development) types.push('devDependencies')
 if (flags.production) types.push('dependencies')
 if (flags.peer) types.push('peerDependencies')
@@ -49,25 +53,28 @@ if (flags.peer) types.push('peerDependencies')
 let projectDir = input[0] || '.'
 if (projectDir[0] === '.') projectDir = path.join(cwd, projectDir)
 
-const spinner = ora('Verifying dependencies...').start()
+debug(chalk.green('projectDir:'), projectDir)
+debug(chalk.green('flags:'), flags)
 
-const result = verify(projectDir, types)
-  .map((r) => ({ ...r, deps: r.deps.filter((d) => d.type) }))
+const spinner = ora('Verifying dependencies...\n').start()
+
+const results = verify(projectDir, types)
+  .map((r) => ({ ...r, deps: r.deps.filter((d) => d.status) }))
   .filter((r) => r.deps.length)
 
 log('\n')
 
-if (result.length) {
+if (results.length) {
   spinner.fail(`The following dependencies are mismatched:`)
 
-  result.forEach((r) => {
+  results.forEach((r) => {
     const table: any = new Table({
       head: ['Name', 'Expected Version', 'Installed Version', 'Type']
     })
 
     table.push(
       ...r.deps
-        .map((d) => [d.name, d.version, d.versionInstalled, d.type])
+        .map((d) => [d.name, d.version, d.versionInstalled, chalk.red('×') + ' ' + d.status])
     )
 
     log(chalk.inverse(`* ${r.type} (${r.deps.length}):`))

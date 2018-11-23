@@ -2,7 +2,7 @@ export interface Dependency {
   name: string
   version: string
   versionInstalled?: string
-  type?: string
+  status?: string
 }
 
 export type DependencyType = 'dependencies' | 'devDependencies' | 'peerDependencies'

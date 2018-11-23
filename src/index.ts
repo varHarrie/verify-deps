@@ -1,23 +1,26 @@
+import Debug from 'debug'
 import path from 'path'
 import semver from 'semver'
 import { getVersionInstalled, readJson, toArray } from './utils'
 import { Dependency, DependencyType } from './types'
+import chalk from 'chalk'
+
+const debug = Debug('debug:main')
 
 function analyze (projectDir: string, dep: Dependency) {
   const versionInstalled = getVersionInstalled(projectDir, dep.name) || '-'
-  const versionExpected = dep.version.replace(/^[\^~]/, '')
 
-  let type = ''
+  let status = ''
 
   if (versionInstalled === '-') {
-    type = 'missing'
-  } else if (semver.valid(versionExpected)) {
-    type = semver.diff(versionInstalled, versionExpected) || ''
-  } else {
-    type = semver.satisfies(versionInstalled, dep.version) ? '' : 'mismatching'
+    status = 'missing'
+  } else if (!semver.satisfies(versionInstalled, dep.version)) {
+    status = 'mismatching'
   }
 
-  return { ...dep, versionInstalled, type }
+  debug(chalk.green('dep:'), dep.name, ' ', dep.version, ' ', versionInstalled, ' ', status || '√')
+
+  return { ...dep, versionInstalled, status }
 }
 
 export default function verify (projectDir: string, types: DependencyType[] = []) {
@@ -26,6 +29,8 @@ export default function verify (projectDir: string, types: DependencyType[] = []
   if (types.length === 0) types = ['dependencies', 'devDependencies', 'peerDependencies']
 
   return types.map((type) => {
+    debug(chalk.green(type + ':'))
+
     const deps = toArray(pkg[type])
       .map((dep) => analyze(projectDir, dep))
 
