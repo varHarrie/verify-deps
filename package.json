@@ -1,0 +1,44 @@
+{
+  "name": "verify-deps",
+  "version": "0.0.1",
+  "description": "",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "bin": "bin/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/varHarrie/verify-deps.git"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "src"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/varHarrie/verify-deps/issues"
+  },
+  "homepage": "https://github.com/varHarrie/verify-deps#readme",
+  "devDependencies": {
+    "tslint": "^5.11.0",
+    "tslint-config-standard": "^8.0.1",
+    "typescript": "^3.1.6"
+  },
+  "dependencies": {
+    "@types/meow": "^5.0.0",
+    "@types/node": "^10.12.10",
+    "@types/ora": "^1.3.4",
+    "@types/semver": "^5.5.0",
+    "chalk": "^2.4.1",
+    "cli-table3": "^0.5.1",
+    "meow": "^5.0.0",
+    "ora": "^3.0.0",
+    "semver": "^5.6.0"
+  }
+}
