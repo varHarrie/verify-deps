@@ -89,7 +89,7 @@ Promise
     }
 
     if (hasErrors) {
-      log(chalk.red(`\n× Use 'npm run install' to update your dependencies.\n`))
+      log(chalk.red(`\n× Use 'npm install' to update your dependencies.\n`))
     } else {
       log(chalk.green(`\n√ Dependencies all matched!\n`))
     }
