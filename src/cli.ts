@@ -19,6 +19,7 @@ const cli = meow(`
     --development  -dev   Checks for devDependencies.
     --production   -prod  Checks for dependencies.
     --peer                Checks for peerDependencies.
+    --list         -l     List dependencies.
     --debug               Displays debug logs.
     --version      -v     Displays the version.
     --help         -h     Displays the help.
@@ -27,6 +28,7 @@ const cli = meow(`
     $ verify-deps
     $ verify-deps ./my-project
     $ verify-deps ./my-project -dev
+    $ verify-deps ./my-project -dev -l
 `, {
   flags: {
     development: {
@@ -36,6 +38,10 @@ const cli = meow(`
     production: {
       type: 'boolean',
       alias: 'prod'
+    },
+    list: {
+      type: 'boolean',
+      alias: 'l'
     }
   }
 })
@@ -58,36 +64,48 @@ debug(chalk.green('flags:'), flags)
 
 const spinner = ora('Verifying dependencies...\n').start()
 
-const results = verify(projectDir, types)
-  .map((r) => ({ ...r, deps: r.deps.filter((d) => d.status) }))
-  .filter((r) => r.deps.length)
+Promise
+  .resolve()
+  .then(() => {
+    const groups = verify(projectDir, types)
+      .map((group) => flags.list ? group : { ...group, deps: group.deps.filter((d) => d.status) })
+      .filter((group) => group.deps.length)
 
-log('\n')
+    const hasErrors = groups.some((group) => group.deps.some((d) => !!d.status))
 
-if (results.length) {
-  spinner.fail(`The following dependencies are mismatched:`)
+    if (hasErrors) {
+      spinner.fail('There are some dependencies that is mismatched:\n')
+    } else if (flags.list && groups.length) {
+      spinner.succeed(`All dependencies:\n`)
+    }
 
-  results.forEach((r) => {
-    const table: any = new Table({
-      head: ['Name', 'Expected Version', 'Installed Version', 'Type']
-    })
+    for (const group of groups) {
+      const rows = group.deps.map(({ name, version, versionInstalled, status }) => {
+        const text = status ? chalk.red('×') + ' ' + status : chalk.green('√')
+        return [name, version, versionInstalled, text]
+      })
 
-    table.push(
-      ...r.deps
-        .map((d) => [d.name, d.version, d.versionInstalled, chalk.red('×') + ' ' + d.status])
-    )
+      if (rows.length) showTable(group.type, rows)
+    }
 
-    log(chalk.inverse(`* ${r.type} (${r.deps.length}):`))
-    log(table.toString())
+    if (hasErrors) {
+      log(chalk.red(`\n× Use 'npm run install' to update your dependencies.\n`))
+    } else {
+      log(chalk.green(`\n√ Dependencies all matched!\n`))
+    }
+
+    if (flags.version) cli.showVersion()
+    if (flags.help) cli.showHelp()
+
+    process.exit(hasErrors ? 1 : 0)
   })
 
-  log(chalk.red(`\nUse 'npm run install' to update your dependencies.\n`))
-  process.exit(1)
+function showTable (title: string, rows: string[][]) {
+  const table: any = new Table({
+    head: ['Name', 'Expected Version', 'Installed Version', 'Type']
+  })
+
+  table.push(...rows)
+  log(chalk.inverse(`* ${title} (${rows.length}):`))
+  log(table.toString())
 }
-
-spinner.succeed('Dependencies all matched!\n')
-
-if (flags.version) cli.showVersion()
-if (flags.help) cli.showHelp()
-
-process.exit(0)
